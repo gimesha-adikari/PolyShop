@@ -1,0 +1,527 @@
+openapi: 3.1.0
+info:
+  title: PolyShop Product Service API
+  version: "1.0.0"
+  description: |
+    Product Service — catalog, categories, brands, and product variant management for PolyShop.
+    Provides CRUD for products & variants, media upload placeholders, pricing metadata, and administrative operations.
+
+servers:
+  - url: https://api.polyshop.local/services/product
+    description: Production (internal)
+  - url: http://localhost:8082
+    description: Local / development
+
+tags:
+  - name: Products
+    description: Product catalog operations
+  - name: Variants
+    description: Product variant operations (size/color/sku)
+  - name: Categories
+    description: Category management
+  - name: Media
+    description: Product media (images)
+  - name: Admin
+    description: Admin-level operations
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    productId:
+      name: productId
+      in: path
+      description: UUID of the product
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    variantId:
+      name: variantId
+      in: path
+      description: UUID of the variant
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number (1-based)
+
+    perPage:
+      name: perPage
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 20
+      description: Items per page
+
+  headers:
+    X-Request-Id:
+      description: Request tracing id
+      schema:
+        type: string
+
+  examples:
+    ProductExample:
+      summary: Example product
+      value:
+        id: "11111111-1111-1111-1111-111111111111"
+        name: "Men's Lightweight Jacket"
+        description: "A breathable, water-resistant jacket."
+        sku: "JK-1234"
+        price: 79.99
+        currency: "USD"
+        status: "ACTIVE"
+        categoryId: "22222222-2222-2222-2222-222222222222"
+        brand: "PolyBrand"
+        tags: ["jackets", "men"]
+        images:
+          - id: "im-1"
+            url: "https://cdn.polyshop.local/images/im-1.jpg"
+            alt: "jacket front"
+        createdAt: "2025-01-01T12:00:00Z"
+
+  schemas:
+    Product:
+      type: object
+      required: [id, name, sku, price, currency, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        sku:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, ARCHIVED]
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        brand:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        defaultVariantId:
+          type: string
+          format: uuid
+          nullable: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProductCreate:
+      type: object
+      required: [name, sku, price, currency]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        sku:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE]
+          default: DRAFT
+        categoryId:
+          type: string
+          format: uuid
+        brand:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageRef'
+
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, ARCHIVED]
+        categoryId:
+          type: string
+          format: uuid
+        brand:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageRef'
+
+    Variant:
+      type: object
+      required: [id, sku, productId, price, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        price:
+          type: number
+          format: float
+        listPrice:
+          type: number
+          format: float
+          nullable: true
+        currency:
+          type: string
+        stock:
+          type: integer
+        status:
+          type: string
+          enum: [AVAILABLE, OUT_OF_STOCK, DISCONTINUED]
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VariantCreate:
+      type: object
+      required: [sku, productId, price, currency]
+      properties:
+        sku:
+          type: string
+        productId:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        price:
+          type: number
+          format: float
+        listPrice:
+          type: number
+          format: float
+        currency:
+          type: string
+        stock:
+          type: integer
+          default: 0
+        status:
+          type: string
+          enum: [AVAILABLE, OUT_OF_STOCK]
+          default: AVAILABLE
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageRef'
+
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        alt:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+
+    ImageRef:
+      type: object
+      properties:
+        externalUrl:
+          type: string
+          format: uri
+        uploadId:
+          type: string
+          format: uuid
+        alt:
+          type: string
+
+    PagedProducts:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        page:
+          type: integer
+        perPage:
+          type: integer
+        total:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            details:
+              type: object
+              additionalProperties:
+                type: string
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+paths:
+  /products:
+    get:
+      tags: [Products]
+      summary: List products (paged)
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, ARCHIVED]
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: "-createdAt"
+      responses:
+        '200':
+          description: Paged product list
+          headers:
+            X-Total-Count:
+              description: Total number of items
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedProducts'
+              examples:
+                default:
+                  $ref: '#/components/examples/ProductExample'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          description: Server error
+
+    post:
+      tags: [Products]
+      summary: Create a new product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /products/{productId}:
+    get:
+      tags: [Products]
+      summary: Get product by id
+      parameters:
+        - $ref: '#/components/parameters/productId'
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                product:
+                  $ref: '#/components/examples/ProductExample'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Products]
+      summary: Update product
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/productId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Validation failed
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Products]
+      summary: Archive product
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/productId'
+      responses:
+        '204':
+          description: Product archived
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+externalDocs:
+  description: Product service ADRs and design decisions
+  url: /docs/architecture/product-service-adr.md

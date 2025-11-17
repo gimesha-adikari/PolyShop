@@ -1,0 +1,111 @@
+openapi: 3.1.0
+info:
+  title: PolyShop Search Service API
+  version: 1.0.0
+  description: |
+    Full-text product search engine powered by Elasticsearch/OpenSearch.
+    Used by the gateway and frontend product listings.
+
+servers:
+  - url: http://localhost:8087
+
+tags:
+  - name: Search
+    description: Product search operations
+  - name: Health
+    description: Service status
+
+paths:
+
+  /search/products:
+    get:
+      tags: [Search]
+      summary: Search products
+      operationId: searchProducts
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (name, description, tags)
+          schema:
+            type: string
+
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageProductSearchHit'
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: health
+      responses:
+        '200':
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/HealthStatus'
+
+components:
+  schemas:
+
+    PageMetadata:
+      $ref: './common.yaml#/components/schemas/PageMetadata'
+
+    ProductSearchHit:
+      type: object
+      required: [productId, name, price, currency, score]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+        currency:
+          type: string
+        score:
+          type: number
+          format: float
+          description: Relevance score from search engine
+
+    PageProductSearchHit:
+      allOf:
+        - $ref: '#/components/schemas/PageMetadata'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductSearchHit'

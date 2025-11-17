@@ -20,7 +20,7 @@ Thumbs.db
 **/.gradle/
 **/gradle-app.setting
 
-# Gradle Wrapper JAR (keep wrapper script, ignore jar)
+# Gradle Wrapper JAR
 /**/gradle/wrapper/gradle-wrapper.jar
 
 # Logs
@@ -135,3 +135,6 @@ docker-compose.override.yml
 /collect_text_and_tree.py
 /tree.py
 /tree.txt
+/project.txt
+/tmp.txt
+/tmp.md

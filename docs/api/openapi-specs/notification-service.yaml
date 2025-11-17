@@ -1,0 +1,227 @@
+openapi: 3.1.0
+info:
+  title: PolyShop Notification Service API
+  version: 1.0.0
+  description: |
+    Centralized email/SMS notification engine.
+    Handles templates, previews, and outbound notifications via providers.
+
+servers:
+  - url: http://localhost:8086
+
+tags:
+  - name: Templates
+    description: Template CRUD and preview
+  - name: Notifications
+    description: Email & SMS dispatching
+  - name: Health
+    description: Service status
+
+paths:
+
+  /templates:
+    get:
+      tags: [Templates]
+      summary: List available templates
+      operationId: listTemplates
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemplateResponse'
+
+    post:
+      tags: [Templates]
+      summary: Create a new template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCreateRequest'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorResponse'
+
+
+  /templates/{templateId}/preview:
+    post:
+      tags: [Templates]
+      summary: Preview a rendered template
+      operationId: previewTemplate
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                variables:
+                  type: object
+                  additionalProperties: true
+              required: [variables]
+      responses:
+        '200':
+          description: Rendered template preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subject:
+                    type: string
+                    nullable: true
+                  body:
+                    type: string
+
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorResponse'
+
+
+  /notifications/email:
+    post:
+      tags: [Notifications]
+      summary: Send an email notification
+      operationId: sendEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailSendRequest'
+      responses:
+        '202':
+          description: Email queued for sending
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorResponse'
+
+
+  /notifications/sms:
+    post:
+      tags: [Notifications]
+      summary: Send an SMS
+      operationId: sendSms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmsSendRequest'
+      responses:
+        '202':
+          description: SMS queued for sending
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/ErrorResponse'
+
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: health
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/HealthStatus'
+
+components:
+  schemas:
+
+    TemplateCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [EMAIL, SMS]
+        subject:
+          type: string
+          nullable: true
+        body:
+          type: string
+      required: [name, type, body]
+
+    TemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [EMAIL, SMS]
+        subject:
+          type: string
+          nullable: true
+        body:
+          type: string
+      required: [id, name, type, body]
+
+    EmailSendRequest:
+      type: object
+      properties:
+        to:
+          type: string
+          format: email
+        templateName:
+          type: string
+        variables:
+          type: object
+          additionalProperties: true
+      required: [to, templateName]
+
+    SmsSendRequest:
+      type: object
+      properties:
+        to:
+          type: string
+          description: Destination phone number
+        templateName:
+          type: string
+        variables:
+          type: object
+          additionalProperties: true
+      required: [to, templateName]
+
+    ErrorResponse:
+      $ref: './common.yaml#/components/schemas/ErrorResponse'

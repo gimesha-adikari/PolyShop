@@ -1,64 +1,52 @@
 package com.polyshop.common.config;
 
-import com.polyshop.common.error.ServiceException;
 import com.polyshop.common.error.ErrorResponse;
+import com.polyshop.common.error.ServiceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
 
 @RestControllerAdvice
 public class GlobalErrorHandler {
 
     @ExceptionHandler(ServiceException.class)
-    public ResponseEntity<ErrorResponse> handleServiceError(ServiceException ex) {
+    public ResponseEntity<ErrorResponse> handleServiceException(
+            ServiceException ex,
+            HttpServletRequest request
+    ) {
+
         ErrorResponse body = new ErrorResponse(
-                ex.getStatus(),
-                ex.getError(),
+                ex.getStatus().value(),
+                ex.getStatus().getReasonPhrase(),
                 ex.getCode(),
                 ex.getMessage(),
-                ex.getPath(),
-                ex.getRequestId(),
+                ex.getPath() != null ? ex.getPath() : request.getRequestURI(),
+                MDC.get("requestId"),
                 ex.getDetails()
         );
+
         return ResponseEntity.status(ex.getStatus()).body(body);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, Object> details = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(f ->
-                details.put(f.getField(), f.getDefaultMessage())
-        );
-
-        ErrorResponse body = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                "VALIDATION_ERROR",
-                "Validation error",
-                null,
-                null,
-                details
-        );
-
-        return ResponseEntity.badRequest().body(body);
-    }
-
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleUnexpectedException(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
+                "INTERNAL_SERVER_ERROR",
                 "UNEXPECTED_ERROR",
                 ex.getMessage(),
-                null,
-                null,
+                request.getRequestURI(),
+                MDC.get("requestId"),
                 null
         );
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

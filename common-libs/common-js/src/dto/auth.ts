@@ -1,3 +1,5 @@
+import type { UserResponse } from "./user";
+
 export interface RegisterRequest {
     email: string;
     password: string;
@@ -36,14 +38,4 @@ export interface AuthTokens {
 
 export interface AuthResponse extends AuthTokens {
     user: UserResponse;
-}
-
-export interface UserResponse {
-    id: string;
-    email: string;
-    fullName?: string;
-    roles: string[];
-    enabled: boolean;
-    emailVerified: boolean;
-    createdAt: string;
 }

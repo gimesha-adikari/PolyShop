@@ -1,0 +1,137 @@
+# Global OS files
+.DS_Store
+Thumbs.db
+
+
+# JetBrains / IntelliJ / Fleet / VSCode
+**/.idea/
+**/.fleet/
+**/.vscode/
+**/*.iml
+**/.project
+**/.classpath
+**/.settings/
+
+
+# Java / Spring Boot / Gradle
+**/build/
+**/out/
+**/target/
+**/.gradle/
+**/gradle-app.setting
+
+# Gradle Wrapper JAR (keep wrapper script, ignore jar)
+/**/gradle/wrapper/gradle-wrapper.jar
+
+# Logs
+**/*.log
+**/logs/
+
+
+# Node.js / Express / JS
+**/node_modules/
+**/npm-debug.log*
+**/yarn-error.log
+**/package-lock.json
+**/pnpm-lock.yaml
+**/bun.lockb
+
+
+# Python / FastAPI / ML
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.ipynb_checkpoints/
+
+# Virtual environments
+**/.venv/
+**/venv/
+**/env/
+
+# Compiled Python files
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+
+# Environment Configurations
+**/.env
+**/.env.*
+**/*.local.env
+** /.secret
+.env
+.env.*
+
+
+# Docker
+**/.dockerignore
+**/docker-data/
+docker-compose.override.yml
+
+
+# Kubernetes / Helm
+**/.kube/
+**/helm/**/charts/
+**/helm/**/tmp/
+**/helm/**/values.schema.json
+
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/crash.log
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+
+# Ansible
+**/.retry
+
+
+# Monitoring / Grafana / Prometheus / Loki / Jaeger
+**/grafana/data/
+**/grafana/logs/
+**/loki/chunks/
+**/prometheus/data/
+
+
+# QA Tools: Postman / Newman / K6 / JMeter
+**/newman/*-report.xml
+**/newman/*-report.html
+**/performance-tests/output/
+
+
+# Security / Certificates
+**/security/certificates/*.crt
+**/security/certificates/*.key
+**/security/certificates/*.pem
+**/security/certificates/*.p12
+
+
+# Misc build tool caches
+**/.cache/
+**/.parcel-cache/
+**/.svelte-kit/
+**/.next/
+**/.nuxt/
+**/.yarn/
+**/.pnp/
+**/.pnp.*
+**/.turbo/
+
+
+# Temporary or Generated Files
+**/*.tmp
+**/*.temp
+**/*.bak
+**/*.swp
+**/*.swo
+**/*.orig
+/collect_text_and_tree.py
+/tree.py
+/tree.txt

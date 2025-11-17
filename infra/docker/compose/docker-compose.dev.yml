@@ -1,0 +1,303 @@
+version: "3.9"
+
+name: polyshop-dev
+
+networks:
+  polyshop-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  kafka_data:
+  zookeeper_data:
+  redis_data:
+
+services:
+  gateway:
+    image: openjdk:21-jdk-slim
+    container_name: gateway
+    working_dir: /app
+    command: ["java", "-jar", "gateway.jar"]
+    volumes:
+      - ./services/gateway/build/libs:/app
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+      - INVENTORY_SERVICE_URL=http://inventory-service:8083
+      - ORDER_SERVICE_URL=http://order-service:8084
+      - PAYMENT_SERVICE_URL=http://payment-service:8085
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8086
+      - SEARCH_SERVICE_URL=http://search-service:8087
+      - ANALYTICS_SERVICE_URL=http://analytics-service:8088
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - product-service
+      - inventory-service
+      - order-service
+      - payment-service
+      - notification-service
+      - search-service
+      - analytics-service
+    networks:
+      - polyshop-net
+
+  auth-service:
+    image: openjdk:21-jdk-slim
+    container_name: auth-service
+    working_dir: /app
+    command: ["java", "-jar", "auth-service.jar"]
+    volumes:
+      - ./services/auth-service/build/libs:/app
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8081
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/auth_db
+      - SPRING_DATASOURCE_USERNAME=auth_user
+      - SPRING_DATASOURCE_PASSWORD=auth_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - polyshop-net
+
+  product-service:
+    image: openjdk:21-jdk-slim
+    container_name: product-service
+    working_dir: /app
+    command: ["java", "-jar", "product-service.jar"]
+    volumes:
+      - ./services/product-service/build/libs:/app
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8082
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/product_db
+      - SPRING_DATASOURCE_USERNAME=product_user
+      - SPRING_DATASOURCE_PASSWORD=product_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - polyshop-net
+
+  inventory-service:
+    image: openjdk:21-jdk-slim
+    container_name: inventory-service
+    working_dir: /app
+    command: ["java", "-jar", "inventory-service.jar"]
+    volumes:
+      - ./services/inventory-service/build/libs:/app
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8083
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/inventory_db
+      - SPRING_DATASOURCE_USERNAME=inventory_user
+      - SPRING_DATASOURCE_PASSWORD=inventory_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - polyshop-net
+
+  order-service:
+    image: openjdk:21-jdk-slim
+    container_name: order-service
+    working_dir: /app
+    command: ["java", "-jar", "order-service.jar"]
+    volumes:
+      - ./services/order-service/build/libs:/app
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8084
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/order_db
+      - SPRING_DATASOURCE_USERNAME=order_user
+      - SPRING_DATASOURCE_PASSWORD=order_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
+      - kafka
+      - inventory-service
+    networks:
+      - polyshop-net
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    environment:
+      - NODE_ENV=development
+      - PORT=8085
+      - KAFKA_BROKER=kafka:9092
+      - PAYMENT_PROVIDER=stripe
+      - STRIPE_SECRET_KEY=sk_test_dummy
+      - ORDER_SERVICE_URL=http://order-service:8084
+    ports:
+      - "8085:8085"
+    depends_on:
+      - kafka
+    networks:
+      - polyshop-net
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    environment:
+      - ENV=dev
+      - PORT=8086
+      - KAFKA_BROKER=kafka:9092
+      - EMAIL_FROM=no-reply@polyshop.local
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+    ports:
+      - "8086:8086"
+    depends_on:
+      - kafka
+      - mailhog
+    networks:
+      - polyshop-net
+
+  search-service:
+    image: openjdk:21-jdk-slim
+    container_name: search-service
+    working_dir: /app
+    command: ["java", "-jar", "search-service.jar"]
+    volumes:
+      - ./services/search-service/build/libs:/app
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8087
+      - SEARCH_ENGINE_URL=http://opensearch:9200
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    ports:
+      - "8087:8087"
+    depends_on:
+      - kafka
+      - opensearch
+    networks:
+      - polyshop-net
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    container_name: analytics-service
+    environment:
+      - ENV=dev
+      - PORT=8088
+      - DB_URL=postgresql://analytics_user:analytics_password@postgres:5432/analytics_db
+      - KAFKA_BROKER=kafka:9092
+    ports:
+      - "8088:8088"
+    depends_on:
+      - postgres
+      - kafka
+    networks:
+      - polyshop-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=polyshop_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/db/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - polyshop-net
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - polyshop-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - polyshop-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - polyshop-net
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - polyshop-net
+
+  opensearch:
+    image: opensearchproject/opensearch:2.18.0
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - polyshop-net

@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polyshop-common-config
+  namespace: polyshop
+  labels:
+    app.kubernetes.io/part-of: polyshop
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  LOGGING_LEVEL_ROOT: "INFO"
+
+  # Gateway
+  GATEWAY_SERVER_PORT: "8080"
+
+  # Auth service
+  AUTH_SERVER_PORT: "8081"
+
+  # Product service
+  PRODUCT_SERVER_PORT: "8082"
+
+  # Inventory service
+  INVENTORY_SERVER_PORT: "8083"
+
+  # Order service
+  ORDER_SERVER_PORT: "8084"
+
+  # Payment service
+  PAYMENT_SERVER_PORT: "8085"
+
+  # Notification service
+  NOTIFICATION_SERVER_PORT: "8086"
+
+  # Search service
+  SEARCH_SERVER_PORT: "8087"
+
+  # Analytics service
+  ANALYTICS_SERVER_PORT: "8088"
+
+  # Database / infra (overridden in overlays)
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"

@@ -1,0 +1,63 @@
+openapi: 3.1.0
+info:
+  title: PolyShop Public API (Gateway)
+  version: 1.0.0
+  description: Public-facing API surface exposed via the API Gateway.
+
+servers:
+  - url: http://localhost:8080
+    description: Local Gateway
+
+tags:
+  - name: Auth
+  - name: Products
+  - name: Orders
+  - name: Payments
+  - name: Search
+  - name: Health
+
+paths:
+  /auth/register:
+    $ref: './auth-service.yaml#/paths/~1auth~1register'
+  /auth/login:
+    $ref: './auth-service.yaml#/paths/~1auth~1login'
+  /auth/refresh:
+    $ref: './auth-service.yaml#/paths/~1auth~1refresh'
+  /auth/me:
+    $ref: './auth-service.yaml#/paths/~1auth~1me'
+
+  /products:
+    $ref: './product-service.yaml#/paths/~1products'
+  /products/{productId}:
+    $ref: './product-service.yaml#/paths/~1products~1{productId}'
+
+  /orders:
+    $ref: './order-service.yaml#/paths/~1orders'
+  /orders/{orderId}:
+    $ref: './order-service.yaml#/paths/~1orders~1{orderId}'
+
+  /payments:
+    $ref: './payment-service.yaml#/paths/~1payments'
+  /payments/{paymentId}:
+    $ref: './payment-service.yaml#/paths/~1payments~1{paymentId}'
+
+  /search/products:
+    $ref: './search-service.yaml#/paths/~1search~1products'
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Gateway health
+      operationId: gatewayHealth
+      responses:
+        '200':
+          description: Health
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/HealthStatus'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: './common.yaml#/components/securitySchemes/bearerAuth'

@@ -1,0 +1,302 @@
+openapi: 3.1.0
+info:
+  title: PolyShop Inventory Service API
+  version: 1.0.0
+  description: Manages stock levels, reservations, TTL expiration, and stock movements.
+
+servers:
+  - url: http://localhost:8083
+
+tags:
+  - name: Stock
+  - name: Reservations
+  - name: Movements
+  - name: Health
+
+paths:
+  /stock:
+    get:
+      tags: [Stock]
+      summary: Get stock info for product or variant
+      operationId: getStock
+      parameters:
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: variantId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stock info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponse'
+        '400':
+          description: Invalid params
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /stock/movements:
+    post:
+      tags: [Movements]
+      summary: Adjust stock via movement (receipt, outbound, manual)
+      operationId: createMovement
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovementCreateRequest'
+      responses:
+        '201':
+          description: Movement recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponse'
+
+  /reservations:
+    post:
+      tags: [Reservations]
+      summary: Reserve stock for an order
+      operationId: createReservation
+      parameters:
+        - $ref: './common.yaml#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        '201':
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '409':
+          description: Insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations/{reservationId}/confirm:
+    post:
+      tags: [Reservations]
+      summary: Confirm reservation (used by Order Service)
+      operationId: confirmReservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations/{reservationId}/release:
+    post:
+      tags: [Reservations]
+      summary: Release a reservation (cancellation or failure)
+      operationId: releaseReservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/HealthStatus'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: './common.yaml#/components/securitySchemes/bearerAuth'
+
+  schemas:
+
+    ErrorResponse:
+      $ref: './common.yaml#/components/schemas/ErrorResponse'
+
+    StockResponse:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        variantId:
+          type: string
+          format: uuid
+          nullable: true
+        available:
+          type: integer
+        reserved:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - productId
+        - available
+        - reserved
+        - updatedAt
+
+    ReservationRequest:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        variantId:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: integer
+          minimum: 1
+        ttlSeconds:
+          type: integer
+          description: Optional expiration TTL for reservation
+      required:
+        - orderId
+        - productId
+        - quantity
+
+    ReservationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        variantId:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: integer
+        status:
+          type: string
+          enum:
+            - RESERVED
+            - CONFIRMED
+            - RELEASED
+            - EXPIRED
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - orderId
+        - productId
+        - quantity
+        - status
+        - createdAt
+
+    StockMovementCreateRequest:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        variantId:
+          type: string
+          format: uuid
+          nullable: true
+        quantityDelta:
+          type: integer
+          description: Positive = add stock, Negative = subtract stock
+        reason:
+          type: string
+          enum:
+            - PURCHASE
+            - RETURN
+            - MANUAL_ADJUST
+            - CORRECTION
+      required:
+        - productId
+        - quantityDelta
+        - reason
+
+    StockMovementResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        variantId:
+          type: string
+          format: uuid
+          nullable: true
+        quantityDelta:
+          type: integer
+        reason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - productId
+        - quantityDelta
+        - reason
+        - createdAt

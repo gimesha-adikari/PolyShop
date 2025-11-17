@@ -1,0 +1,84 @@
+openapi: 3.1.0
+info:
+  title: PolyShop Analytics Service API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8088
+
+tags:
+  - name: Analytics
+  - name: Health
+
+paths:
+  /analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: Get high-level metrics
+      operationId: getSummary
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Summary analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSummary'
+
+  /analytics/sales-by-day:
+    get:
+      tags: [Analytics]
+      summary: Sales grouped by day
+      operationId: salesByDay
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Sales by day
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesDay'
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: health
+      responses:
+        '200':
+          description: Health
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/HealthStatus'
+
+components:
+  schemas:
+    AnalyticsSummary:
+      type: object
+      properties:
+        totalOrders: { type: integer }
+        totalRevenue: { type: number, format: double }
+        totalCustomers: { type: integer }
+        avgOrderValue: { type: number, format: double }
+
+    SalesDay:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        orders: { type: integer }
+        revenue: { type: number, format: double }

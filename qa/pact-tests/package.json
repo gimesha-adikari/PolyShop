@@ -1,0 +1,27 @@
+{
+  "name": "polyshop-pact-tests",
+  "version": "1.0.0",
+  "description": "Pact consumer contract tests for PolyShop microservices.",
+  "main": "pact.test.js",
+  "scripts": {
+    "test": "mocha pact.test.js --timeout 10000",
+    "publish:pact": "pact-broker publish ./pacts --consumer-app-version=$(git rev-parse --short HEAD)",
+    "verify": "pact-broker can-i-deploy --pacticipant=polyshop-frontend --version=$(git rev-parse --short HEAD) --to=production"
+  },
+  "dependencies": {
+    "@pact-foundation/pact": "^12.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.7"
+  },
+  "pact": {
+    "consumer": "polyshop-frontend",
+    "provider": "polyshop-api-gateway",
+    "pactFilesOrDirs": [
+      "pacts/"
+    ],
+    "logLevel": "info"
+  }
+}

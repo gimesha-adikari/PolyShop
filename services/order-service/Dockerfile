@@ -1,0 +1,37 @@
+# syntax=docker/dockerfile:1.6
+
+FROM eclipse-temurin:21-jdk AS builder
+WORKDIR /app
+
+COPY gradlew settings.gradle build.gradle ./
+COPY gradle ./gradle
+COPY src ./src
+
+RUN chmod +x ./gradlew
+RUN ./gradlew clean bootJar --no-daemon
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+ENV SPRING_PROFILES_ACTIVE=prod
+
+ENV ORDER_DB_URL=""
+ENV ORDER_DB_USERNAME=""
+ENV ORDER_DB_PASSWORD=""
+ENV ORDER_SAGA_TIMEOUT=30000
+ENV ORDER_KAFKA_TOPIC_EVENTS="order.events"
+ENV INVENTORY_SERVICE_URL=""
+ENV KAFKA_BOOTSTRAP_SERVERS=""
+ENV JWT_PUBLIC_KEY=""
+ENV JWT_ISSUER="polyshop-auth"
+
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+EXPOSE 8084
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -fsS http://localhost:8084/actuator/health || exit 1
+
+ENTRYPOINT ["java","-jar","/app/app.jar"]

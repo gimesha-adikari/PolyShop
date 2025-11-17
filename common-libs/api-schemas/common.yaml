@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: PolyShop Common API Schemas
+  version: 1.0.0
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Standard error object shared across services.
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        code:
+          type: string
+          description: Stable machine-readable error code.
+        message:
+          type: string
+        path:
+          type: string
+        requestId:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+
+    PageMetadata:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+        totalElements:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+
+    Address:
+      type: object
+      properties:
+        line1:
+          type: string
+        line2:
+          type: string
+          nullable: true
+        city:
+          type: string
+        state:
+          type: string
+          nullable: true
+        postalCode:
+          type: string
+          nullable: true
+        country:
+          type: string
+      required:
+        - line1
+        - city
+        - country
+
+    HealthStatus:
+      type: object
+      description: Health check response format.
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, UNKNOWN]
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - status
+
+  parameters:
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Unique key used to guarantee idempotent behaviour for POST operations
+        such as order creation or payment creation.
+      schema:
+        type: string
+
+    RequestIdHeader:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: Optional correlation ID used for distributed tracing.
+      schema:
+        type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

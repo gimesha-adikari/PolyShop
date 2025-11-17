@@ -1,0 +1,13 @@
+[project]
+name = "polyshop-common-py"
+version = "1.0.0"
+description = "Shared Python utilities for PolyShop services"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.8.0"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,19 @@
+{
+  "name": "@polyshop/common-js",
+  "version": "1.0.0",
+  "description": "Shared TypeScript DTOs and utilities for PolyShop Node/JS services.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "lint": "echo \"add ESLint later\"",
+    "test": "echo \"no tests yet\""
+  },
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

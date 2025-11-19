@@ -1,26 +1,51 @@
-server:
-  port: 8081
-
 spring:
-  application:
-    name: auth-service
-
-  docker:
-    compose:
-      enabled: false
-
   datasource:
-    url: jdbc:postgresql://localhost:5432/auth_db
-    username: auth_user
-    password: auth_pass
+    url: ${AUTH_DB_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${AUTH_DB_USERNAME:auth_user}
+    password: ${AUTH_DB_PASSWORD:auth_pass}
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
 
+  mail:
+    host: ${MAIL_HOST:smtp.sendgrid.net}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:apikey}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    from: ${MAIL_FROM:no-reply@polyshop.example}
+
+server:
+  port: ${SERVER_PORT:8081}
+
+auth:
+  jwt:
+    expires-in: ${AUTH_JWT_EXPIRES_IN:900}
+    issuer: ${JWT_ISSUER:polyshop-auth}
+    allow-dev-keys: ${AUTH_ALLOW_DEV_KEYS:true}
+
+  token:
+    cleanup:
+      retention-seconds: ${AUTH_TOKEN_RETENTION_SECONDS:604800}
+      cron: ${AUTH_TOKEN_CLEANUP_CRON:0 0 * * * *}
+
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health
+  health:
+    mail:
+      enabled: false
+
+frontend:
+  base-url: ${FRONTEND_BASE_URL:https://polyshop.example}
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html

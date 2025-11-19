@@ -1,16 +1,15 @@
-// Generic envelope used by all services
 export interface EventEnvelope<TPayload = unknown> {
-    id: string;                // event id
-    type: string;              // e.g. "order.created.v1"
-    source: string;            // e.g. "order-service"
+    id: string;
+    type: string;
+    source: string;
     payload: TPayload;
     correlationId?: string;
     causationId?: string;
-    occurredAt: string;        // ISO date-time
-    version: number;           // schema version
+    occurredAt: string;
+    version: number;
 }
 
-// ========== AUTH EVENTS ==========
+// AUTH EVENTS
 
 export interface UserRegisteredPayload {
     userId: string;
@@ -25,7 +24,7 @@ export interface UserEmailVerifiedPayload {
     verifiedAt: string;
 }
 
-// ========== ORDER EVENTS ==========
+// ORDER EVENTS
 
 export interface OrderCreatedItem {
     productId: string;
@@ -50,7 +49,7 @@ export interface OrderStatusChangedPayload {
     reason?: string;
 }
 
-// ========== PAYMENT EVENTS ==========
+// PAYMENT EVENTS
 
 export interface PaymentCreatedPayload {
     paymentId: string;
@@ -71,7 +70,7 @@ export interface PaymentStatusChangedPayload {
     providerRef?: string;
 }
 
-// ========== INVENTORY EVENTS ==========
+// INVENTORY EVENTS
 
 export interface InventoryReservedPayload {
     reservationId: string;
@@ -102,7 +101,7 @@ export interface InventoryReservationConfirmedPayload {
     confirmedAt: string;
 }
 
-// ========== NOTIFICATION EVENTS ==========
+// NOTIFICATION EVENTS
 
 export interface NotificationEmailRequestedPayload {
     notificationId: string;

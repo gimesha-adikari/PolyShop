@@ -3,6 +3,8 @@ info:
   title: PolyShop Common API Schemas
   version: 1.0.0
 
+paths: {}
+
 components:
   schemas:
     ErrorResponse:
